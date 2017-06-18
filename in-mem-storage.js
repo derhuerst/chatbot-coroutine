@@ -5,7 +5,7 @@ const data = Object.create(null)
 const inMemStorage = (user) => {
 	const read = (key) => {
 		key = user + ':' + key
-		return Promise.resolve(key in 'data' ? data[key] : null)
+		return Promise.resolve(key in data ? data[key] : null)
 	}
 
 	const write = (key, val) => {

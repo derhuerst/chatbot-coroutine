@@ -37,8 +37,6 @@ const coroutine = (gen, task, msg) => {
 	const suspend = !!task[SUSPEND]
 	const insert = !!task[INSERT]
 	return task.then(tick(suspend, insert))
-
-	return tick(false, false)(null)
 }
 
 // todo: find a better name than createResponder
@@ -54,7 +52,7 @@ const createResponder = (storage, telegram, talk) => {
 		}
 
 		const send = (msg) => {
-			telegram.sendMessage(user, msg)
+			telegram.send(user, msg)
 			return Promise.resolve()
 		}
 
@@ -72,9 +70,7 @@ const createResponder = (storage, telegram, talk) => {
 		return ctx
 	}
 
-	return function respond (msg) {
-		const user = msg.chat.id
-
+	return function respond (user, msg) {
 		let gen = gens[user]
 		if (!gen) {
 			const ctx = createCtx(user)
@@ -84,6 +80,7 @@ const createResponder = (storage, telegram, talk) => {
 		// todo: what if a 2nd message comes in while the 1st is still being processed?
 		const task = tasks[user] || Promise.resolve(null)
 		tasks[user] = coroutine(gen, task, msg)
+		tasks[user].catch(console.error)
 	}
 }
 
