@@ -1,5 +1,7 @@
 # chatbot-coroutine
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/derhuerst/chatbot-coroutine.svg)](https://greenkeeper.io/)
+
 **Abstract chatbot message into conversations.** A [coroutine](https://en.wikipedia.org/wiki/Coroutine) that allows you to write chatbot conversations using [generator functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator).
 
 [![npm version](https://img.shields.io/npm/v/chatbot-coroutine.svg)](https://www.npmjs.com/package/chatbot-coroutine)
