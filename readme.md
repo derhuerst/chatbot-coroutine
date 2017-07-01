@@ -49,7 +49,7 @@ const conversation = function* (ctx) {
 	yield ctx.clear()
 }
 
-const respond = createRespond(inMemStorage, bot, conversation)
+const respond = createRespond(inMemStorage, bot, conversation, console.error)
 bot.on('message', respond)
 ```
 
@@ -98,13 +98,13 @@ Using `createRespond`, create a `respond` function from it. Pass in a storage ad
 const createRespond = require('chatbot-coroutine')
 const inMemStorage = require('chatbot-coroutine/in-mem-storage')
 
-const respond = createRespond(inMemStorage, bot, conversation)
+const respond = createRespond(inMemStorage, bot, conversation, console.error)
 bot.on('message', respond)
 ```
 
 ## API
 
-### `createRespond(storage, bot, conversation)`
+### `createRespond(storage, bot, conversation, onError)`
 
 `bot` should have a `send(user, msg)` method.
 

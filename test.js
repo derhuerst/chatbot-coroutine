@@ -116,7 +116,7 @@ const sendMultiple = (respond, msgs, cb) => {
 test('end-to-end test, running once', (t) => {
 	t.plan(4)
 
-	function* conversation (ctx) {
+	function* run (ctx) {
 		const in1 = yield ctx.prompt('out1')
 		t.equal(in1, 'in1', '1st received msg is "in1"')
 
@@ -135,7 +135,7 @@ test('end-to-end test, running once', (t) => {
 		i++
 	}
 
-	const respond = createRespond(inMemStorage, {send: sendMock}, conversation)
+	const respond = createRespond(inMemStorage, {send: sendMock}, run, t.ifError)
 
 	// 1 dummy message to initiate the bot
 	sendMultiple(respond, ['hey', 'in1', 'in2'], (err) => {
@@ -147,7 +147,7 @@ test('end-to-end test, running once', (t) => {
 test('end-to-end test, running twice', (t) => {
 	t.plan(4 + 3) // 4 outgoing, 3 incoming
 
-	function* conversation (ctx) {
+	function* run (ctx) {
 		const in1 = yield ctx.prompt('out1')
 		t.equal(in1, 'in1', '1st received msg is "in1"')
 
@@ -163,7 +163,7 @@ test('end-to-end test, running twice', (t) => {
 		i++
 	}
 
-	const respond = createRespond(inMemStorage, {send: sendMock}, conversation)
+	const respond = createRespond(inMemStorage, {send: sendMock}, run, t.ifError)
 
 	// 2 dummy messages to initiate the bot
 	sendMultiple(respond, ['hey', 'in1', 'in2', 'hey', 'in1'], (err) => {

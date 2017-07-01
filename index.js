@@ -25,7 +25,7 @@ const mustYieldPromise = 'The `conversation` generator function must always yiel
 const coroutine = (gen, val, queue, cb) => {
 	const tick = (task) => {
 		if (!isPromise(task)) return cb(new Error(mustYieldPromise))
-		return task.then(tock)
+		task.then(tock).catch(cb)
 	}
 
 	const tock = (handle) => {
@@ -40,16 +40,19 @@ const coroutine = (gen, val, queue, cb) => {
 			return cb(null, createHandle(null, insert))
 		}
 
-		const {done, value: task} = gen.next(insert ? queue.shift() : value)
-		if (done) return cb(null, RESTART)
-		tick(task)
+		try {
+			const {done, value: task} = gen.next(insert ? queue.shift() : value)
+			if (done) return cb(null, RESTART)
+			tick(task)
+		} catch (err) {
+			cb(err)
+		}
 	}
 
 	tick(Promise.resolve(val))
-	.catch(cb)
 }
 
-const createRespond = (storage, telegram, conversation) => {
+const createRespond = (storage, telegram, conversation, onError) => {
 	const createCtx = (user) => {
 		const insert = () => {
 			return Promise.resolve(createHandle(undefined, true))
@@ -89,8 +92,8 @@ const createRespond = (storage, telegram, conversation) => {
 
 			tasks[user] = new Promise((resolve, reject) => {
 				coroutine(gen, val, queue, (err, val) => {
-					if (err) return console.error(err) // todo
-					resolve(val)
+					if (err) onError(user, err)
+					else resolve(val)
 				})
 			})
 		}

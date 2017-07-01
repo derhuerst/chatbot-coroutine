@@ -11,5 +11,5 @@ const conversation = function* (ctx) {
 	yield ctx.clear()
 }
 
-const respond = createRespond(inMemStorage(), bot, conversation)
+const respond = createRespond(inMemStorage(), bot, conversation, console.error)
 bot.on('message', respond)
