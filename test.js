@@ -3,7 +3,7 @@
 const test = require('tape')
 
 const createResponder = require('.')
-const {decorate, SUSPEND, INSERT, coroutine} = createResponder
+const {createHandle, coroutine} = createResponder
 
 test('throws with non-Promise yield', (t) => {
 	function* run () {
@@ -17,46 +17,47 @@ test('throws with non-Promise yield', (t) => {
 	})
 })
 
+test('passes non-handle values through', (t) => {
+	function* run () {
+		const o1 = {foo: 'bar'}
+		const o2 = yield Promise.resolve(o1)
+		t.equal(o1, o2)
+		t.end()
+	}
+
+	coroutine(run(), Promise.resolve(), null)
+	.catch(t.ifError)
+})
+
 test('stops at SUSPEND', (t) => {
 	function* run () {
-		const p = Promise.resolve('out')
-		decorate(p, SUSPEND)
-		yield p
+		yield Promise.resolve(createHandle('out', true, false))
 
 		t.fail('generator hasn\'t been stopped') // should never get here
 	}
 
 	coroutine(run(), Promise.resolve(), 'in')
-	.then((val) => {
-		t.equal(val, 'out')
-		t.end()
-	})
+	.then(() => t.end())
 	.catch(t.ifError)
 })
 
 test('stops later at SUSPEND', (t) => {
 	function* run () {
 		yield Promise.resolve('out1')
-		const p = Promise.resolve('out2')
-		decorate(p, SUSPEND)
-		yield p
+		yield Promise.resolve(createHandle('out2', true, false))
 
 		t.fail('generator hasn\'t been stopped') // should never get here
 	}
 
 	coroutine(run(), Promise.resolve(), 'in')
-	.then((val) => {
-		t.equal(val, 'out2')
-		t.end()
-	})
+	.then(() => t.end())
 	.catch(t.ifError)
 })
 
 test('passes in at INSERT', (t) => {
 	function* run () {
-		const p = Promise.resolve('out')
-		decorate(p, INSERT)
-		const x = yield p
+		const x = yield Promise.resolve(createHandle('out', false, true))
+
 		t.equal(x, 'in')
 		t.end()
 	}
@@ -68,9 +69,8 @@ test('passes in at INSERT', (t) => {
 test('passes in later at INSERT', (t) => {
 	function* run () {
 		yield Promise.resolve('out1')
-		const p = Promise.resolve('out2')
-		decorate(p, INSERT)
-		const x = yield p
+		const x = yield Promise.resolve(createHandle('out2', false, true))
+
 		t.equal(x, 'in')
 		t.end()
 	}
@@ -81,10 +81,7 @@ test('passes in later at INSERT', (t) => {
 
 test('works with INSERT & SUSPEND', (t) => {
 	function* run () {
-		const p = Promise.resolve('out')
-		decorate(p, INSERT)
-		decorate(p, SUSPEND)
-		const x = yield p
+		const x = yield Promise.resolve(createHandle('out', true, true))
 
 		t.equal(x, 'in2')
 		t.end()
@@ -92,9 +89,8 @@ test('works with INSERT & SUSPEND', (t) => {
 
 	const gen = run()
 	const task = coroutine(gen, Promise.resolve(), 'in1')
-	.then((val) => {
-		t.equal(val, 'out')
-		return coroutine(gen, task, 'in2') // only to pass the SUSPEND
-	})
+
+	task
+	.then(() => coroutine(gen, task, 'in2')) // only to pass the SUSPEND
 	.catch(t.ifError)
 })

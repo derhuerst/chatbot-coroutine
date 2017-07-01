@@ -2,15 +2,6 @@
 
 const isPromise = require('is-promise')
 
-const decorate = (promise, trait) => {
-	Object.defineProperty(promise, trait, {
-		value: true,
-		configurable: false,
-		enumerable: false,
-		writable: false
-	})
-}
-
 // There are two different ways in which `talk` can `yield`:
 // - non-suspending mode: it will be executed further without any incoming message.
 // - suspending mode: it will be executed further only on the next incoming message.
@@ -18,25 +9,43 @@ const decorate = (promise, trait) => {
 const SUSPEND = Symbol.for('suspend') // indicates "wait for the incoming next message"
 const INSERT = Symbol.for('insert') // indicates "pass in the next incoming message"
 
+const VALUE = Symbol.for('value')
+
+const createHandle = (value, suspend, insert) => {
+	const obj = Object.create(null)
+	Object.defineProperty(obj, VALUE, {
+		value, configurable: false, enumerable: false, writable: false
+	})
+	Object.defineProperty(obj, SUSPEND, {
+		value: !!suspend, configurable: false, enumerable: false, writable: false
+	})
+	Object.defineProperty(obj, INSERT, {
+		value: !!insert, configurable: false, enumerable: false, writable: false
+	})
+	return obj
+}
+
 // see also https://github.com/Artazor/so/blob/abdc3f7/lib/so.js#L22-L43
 const coroutine = (gen, task, msg) => {
-	let i = 0
-
-	const tick = (insert) => (val) => {
-		const {value: task, done} = insert ? gen.next(msg) : gen.next(val)
-
-		if (done) return Promise.resolve('bla bla end') // todo
-		if (!isPromise(task)) return Promise.reject(new Error('must yield Promise'))
-		const suspend = !!task[SUSPEND]
-		if (suspend || insert) return task
-
-		const nextInsert = !!task[INSERT]
-		return task.then(tick(nextInsert))
+	const tick = (task) => {
+		if (!isPromise(task)) return Promise.reject(new Error('must yield a Promise'))
+		return task.then(tock)
 	}
 
-	const suspend = !!task[SUSPEND]
-	const insert = !!task[INSERT]
-	return task.then(tick(suspend, insert))
+	const tock = (handle) => {
+		const value = ('object' === typeof handle) && (VALUE in handle) ? handle[VALUE] : handle
+		const insert = !!(handle && handle[INSERT])
+		const suspend = !!(handle && !!handle[SUSPEND])
+
+		if (suspend) return createHandle(value, false, insert)
+
+		const {done, value: task} = gen.next(insert ? msg : value)
+		if (done) return Promise.resolve('----- this is the end -----') // todo
+
+		return tick(task)
+	}
+
+	return tick(task)
 }
 
 // todo: find a better name than createResponder
@@ -46,9 +55,7 @@ const createResponder = (storage, telegram, talk) => {
 
 	const createCtx = (user) => {
 		const insert = () => {
-			const out = Promise.resolve()
-			decorate(out, INSERT)
-			return out
+			return Promise.resolve(createHandle(undefined, false, true))
 		}
 
 		const send = (msg) => {
@@ -57,10 +64,8 @@ const createResponder = (storage, telegram, talk) => {
 		}
 
 		const prompt = (msg) => {
-			const out = send(msg)
-			decorate(out, SUSPEND)
-			decorate(out, INSERT)
-			return out
+			telegram.send(user, msg)
+			return Promise.resolve(createHandle(undefined, true, true))
 		}
 
 		const ctx = Object.create(storage(user))
@@ -78,14 +83,11 @@ const createResponder = (storage, telegram, talk) => {
 		}
 
 		// todo: what if a 2nd message comes in while the 1st is still being processed?
-		const task = tasks[user] || Promise.resolve(null)
-		task
-		.then(() => {
-			tasks[user] = coroutine(gen, task, msg)
-		})
-		.catch(console.error)
+		const task = coroutine(gen, tasks[user] || Promise.resolve(), msg)
+		task.catch(console.error)
+		tasks[user] = task
 	}
 }
 
-Object.assign(createResponder, {decorate, SUSPEND, INSERT, coroutine})
+Object.assign(createResponder, {createHandle, coroutine})
 module.exports = createResponder
