@@ -10,8 +10,7 @@ test('throws with non-Promise yield', (t) => {
 		yield 1
 	}
 
-	coroutine(run(), Promise.resolve(), 'in')
-	.catch((err) => {
+	coroutine(run(), null, ['in'], (err) => {
 		t.ok(err, 'error thrown')
 		t.end()
 	})
@@ -25,8 +24,7 @@ test('passes non-handle values through', (t) => {
 		t.end()
 	}
 
-	coroutine(run(), Promise.resolve(), null)
-	.catch(t.ifError)
+	coroutine(run(), null, null, t.ifError)
 })
 
 test('stops at SUSPEND', (t) => {
@@ -36,9 +34,10 @@ test('stops at SUSPEND', (t) => {
 		t.fail('generator hasn\'t been stopped') // should never get here
 	}
 
-	coroutine(run(), Promise.resolve(), 'in')
-	.then(() => t.end())
-	.catch(t.ifError)
+	coroutine(run(), null, 'in', (err) => {
+		if (err) t.ifError(err)
+		else t.end()
+	})
 })
 
 test('stops later at SUSPEND', (t) => {
@@ -49,9 +48,10 @@ test('stops later at SUSPEND', (t) => {
 		t.fail('generator hasn\'t been stopped') // should never get here
 	}
 
-	coroutine(run(), Promise.resolve(), 'in')
-	.then(() => t.end())
-	.catch(t.ifError)
+	coroutine(run(), null, 'in', (err) => {
+		if (err) t.ifError(err)
+		else t.end()
+	})
 })
 
 test('passes in at INSERT', (t) => {
@@ -62,8 +62,7 @@ test('passes in at INSERT', (t) => {
 		t.end()
 	}
 
-	coroutine(run(), Promise.resolve(), 'in')
-	.catch(t.ifError)
+	coroutine(run(), null, 'in', t.ifError)
 })
 
 test('passes in later at INSERT', (t) => {
@@ -75,8 +74,7 @@ test('passes in later at INSERT', (t) => {
 		t.end()
 	}
 
-	coroutine(run(), Promise.resolve(), 'in')
-	.catch(t.ifError)
+	coroutine(run(), null, 'in', t.ifError)
 })
 
 test('works with INSERT & SUSPEND', (t) => {
@@ -88,9 +86,8 @@ test('works with INSERT & SUSPEND', (t) => {
 	}
 
 	const gen = run()
-	const task = coroutine(gen, Promise.resolve(), 'in1')
-
-	task
-	.then(() => coroutine(gen, task, 'in2')) // only to pass the SUSPEND
-	.catch(t.ifError)
+	coroutine(gen, null, 'in1', (err, val) => {
+		if (err) t.ifError(err)
+		else coroutine(gen, val, 'in2', t.ifError) // only to pass the SUSPEND
+	})
 })

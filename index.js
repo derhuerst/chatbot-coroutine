@@ -9,6 +9,8 @@ const isPromise = require('is-promise')
 const SUSPEND = Symbol.for('suspend') // indicates "wait for the incoming next message"
 const INSERT = Symbol.for('insert') // indicates "pass in the next incoming message"
 
+const INIT = Symbol.for('init')
+
 const VALUE = Symbol.for('value')
 
 const createHandle = (value, suspend, insert) => {
@@ -25,27 +27,31 @@ const createHandle = (value, suspend, insert) => {
 	return obj
 }
 
+const isObj = (obj) => obj && ('object' === typeof obj)
+
 // see also https://github.com/Artazor/so/blob/abdc3f7/lib/so.js#L22-L43
-const coroutine = (gen, task, msg) => {
+const coroutine = (gen, val, msg, cb) => {
 	const tick = (task) => {
-		if (!isPromise(task)) return Promise.reject(new Error('must yield a Promise'))
+		if (!isPromise(task)) return cb(new Error('must yield a Promise'))
 		return task.then(tock)
 	}
 
 	const tock = (handle) => {
-		const value = ('object' === typeof handle) && (VALUE in handle) ? handle[VALUE] : handle
+		const value = isObj(handle) && (VALUE in handle) ? handle[VALUE] : handle
 		const insert = !!(handle && handle[INSERT])
 		const suspend = !!(handle && !!handle[SUSPEND])
 
-		if (suspend) return createHandle(value, false, insert)
+		if (suspend) return cb(null, createHandle(value, false, insert))
 
 		const {done, value: task} = gen.next(insert ? msg : value)
-		if (done) return Promise.resolve('----- this is the end -----') // todo
-
-		return tick(task)
+		if (done) return cb(null, INIT)
+		// if insertion is required, wait to get called with a new message
+		if (insert) return cb(null, createHandle(null, false, insert))
+		tick(task)
 	}
 
-	return tick(task)
+	tick(Promise.resolve(val))
+	.catch(cb)
 }
 
 // todo: find a better name than createResponder
@@ -83,11 +89,27 @@ const createResponder = (storage, telegram, talk) => {
 		}
 
 		// todo: what if a 2nd message comes in while the 1st is still being processed?
-		const task = coroutine(gen, tasks[user] || Promise.resolve(), msg)
-		task.catch(console.error)
-		tasks[user] = task
+
+		const loop = (val) => {
+			let gen = gens[user]
+			if (val === INIT) {
+				const ctx = createCtx(user)
+				gen = gens[user] = talk(ctx)
+				val = null
+			}
+
+			tasks[user] = new Promise((resolve, reject) => {
+				coroutine(gen, val, msg, (err, val) => {
+					if (err) return console.error(err) // todo
+					resolve(val)
+				})
+			})
+		}
+
+		if (!tasks[user]) loop(INIT)
+		else tasks[user].then(loop)
 	}
 }
 
-Object.assign(createResponder, {createHandle, coroutine})
+Object.assign(createResponder, {INIT, createHandle, coroutine})
 module.exports = createResponder
