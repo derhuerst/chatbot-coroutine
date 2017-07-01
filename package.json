@@ -25,6 +25,7 @@
 		"is-promise": "^2.1.0"
 	},
 	"devDependencies": {
+		"async": "^2.5.0",
 		"tape": "^4.6.3",
 		"tap-min": "^1.2.1"
 	},
