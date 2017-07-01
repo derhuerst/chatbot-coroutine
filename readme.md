@@ -49,7 +49,7 @@ const conversation = function* (ctx) {
 	yield ctx.clear()
 }
 
-const respond = createResponder(inMemStorage(), myChatbot, conversation)
+const respond = createResponder(inMemStorage, myChatbot, conversation)
 myChatbot.on('message', respond)
 ```
 
@@ -98,7 +98,7 @@ Using `createResponder`, create a `respond` function from it. Pass in a storage 
 const createResponder = require('chatbot-coroutine')
 const inMemStorage = require('chatbot-coroutine/in-mem-storage')
 
-const respond = createResponder(inMemStorage(), myChatbot, conversation)
+const respond = createResponder(inMemStorage, myChatbot, conversation)
 myChatbot.on('message', respond)
 ```
 
@@ -108,7 +108,7 @@ myChatbot.on('message', respond)
 
 `bot` should have a `send(user, msg)` method.
 
-`conversation(ctx)` should be a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) function.
+`conversation` should be a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) function, taking only one argument `ctx`.
 
 ### `ctx.msg()`
 

@@ -12,11 +12,11 @@ const decorate = (promise, trait) => {
 }
 
 // There are two different ways in which `talk` can `yield`:
-// - non-suspending mode. `talk` will be called further without any incoming message.
-// - suspending more. `talk` will be called again only on the next incoming message.
+// - non-suspending mode: it will be executed further without any incoming message.
+// - suspending mode: it will be executed further only on the next incoming message.
 // This Symbol is being used to differentiate the Promises `talk` returns.
 const SUSPEND = Symbol.for('suspend') // indicates "wait for the incoming next message"
-const INSERT = Symbol.for('insert') // indicates "pass in the incoming message"
+const INSERT = Symbol.for('insert') // indicates "pass in the next incoming message"
 
 // see also https://github.com/Artazor/so/blob/abdc3f7/lib/so.js#L22-L43
 const coroutine = (gen, task, msg) => {
@@ -79,8 +79,11 @@ const createResponder = (storage, telegram, talk) => {
 
 		// todo: what if a 2nd message comes in while the 1st is still being processed?
 		const task = tasks[user] || Promise.resolve(null)
-		tasks[user] = coroutine(gen, task, msg)
-		tasks[user].catch(console.error)
+		task
+		.then(() => {
+			tasks[user] = coroutine(gen, task, msg)
+		})
+		.catch(console.error)
 	}
 }
 
