@@ -68,6 +68,7 @@ const createRespond = (storage, telegram, conversation, onError) => {
 			return Promise.resolve(createHandle(undefined, true))
 		}
 
+		// todo: migrate to the levelUP API, wrap in promises here
 		const ctx = Object.create(storage(user))
 		ctx.msg = insert
 		ctx.send = send

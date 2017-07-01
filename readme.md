@@ -102,6 +102,13 @@ const respond = createRespond(inMemStorage, bot, conversation, console.error)
 bot.on('message', respond)
 ```
 
+### storage adapters
+
+```js
+const inMemStorage = require('chatbot-coroutine/in-mem-storage')
+const levelDBStorage = require('chatbot-coroutine/leveldb-storage')(db)
+```
+
 ## API
 
 ### `createRespond(storage, bot, conversation, onError)`
