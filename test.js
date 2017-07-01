@@ -24,70 +24,43 @@ test('passes non-handle values through', (t) => {
 		t.end()
 	}
 
-	coroutine(run(), null, null, t.ifError)
+	coroutine(run(), null, [], t.ifError)
 })
 
 test('stops at SUSPEND', (t) => {
 	function* run () {
-		yield Promise.resolve(createHandle('out', true, false))
-
-		t.fail('generator hasn\'t been stopped') // should never get here
-	}
-
-	coroutine(run(), null, 'in', (err) => {
-		if (err) t.ifError(err)
-		else t.end()
-	})
-})
-
-test('stops later at SUSPEND', (t) => {
-	function* run () {
-		yield Promise.resolve('out1')
-		yield Promise.resolve(createHandle('out2', true, false))
-
-		t.fail('generator hasn\'t been stopped') // should never get here
-	}
-
-	coroutine(run(), null, 'in', (err) => {
-		if (err) t.ifError(err)
-		else t.end()
-	})
-})
-
-test('passes in at INSERT', (t) => {
-	function* run () {
-		const x = yield Promise.resolve(createHandle('out', false, true))
+		const x = yield Promise.resolve(createHandle(null, true))
 
 		t.equal(x, 'in')
 		t.end()
 	}
 
-	coroutine(run(), null, 'in', t.ifError)
+	coroutine(run(), null, ['in'], t.ifError)
 })
 
 test('passes in later at INSERT', (t) => {
 	function* run () {
 		yield Promise.resolve('out1')
-		const x = yield Promise.resolve(createHandle('out2', false, true))
+		const x = yield Promise.resolve(createHandle(null, true))
 
 		t.equal(x, 'in')
 		t.end()
 	}
 
-	coroutine(run(), null, 'in', t.ifError)
+	coroutine(run(), null, ['in'], t.ifError)
 })
 
-test('works with INSERT & SUSPEND', (t) => {
+test('works with two queue items', (t) => {
 	function* run () {
-		const x = yield Promise.resolve(createHandle('out', true, true))
+		const x1 = yield Promise.resolve(createHandle(null, true))
+		const x2 = yield Promise.resolve(createHandle(null, true))
 
-		t.equal(x, 'in2')
+		t.equal(x1, 'in1')
+		t.equal(x2, 'in2')
 		t.end()
 	}
 
-	const gen = run()
-	coroutine(gen, null, 'in1', (err, val) => {
-		if (err) t.ifError(err)
-		else coroutine(gen, val, 'in2', t.ifError) // only to pass the SUSPEND
+	coroutine(run(), null, ['in1', 'in2'], (err) => {
+		t.ifError(err)
 	})
 })
