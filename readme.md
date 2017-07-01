@@ -1,6 +1,6 @@
 # chatbot-coroutine
 
-**Abstract chatbot message into conversations.** A [coroutine](https://en.wikipedia.org/wiki/Coroutine) that allows you to write chatbot conversations using [generator functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator).
+**Model chatbots as conversations.** A [coroutine](https://en.wikipedia.org/wiki/Coroutine) that allows you to write chatbot conversations using [generator functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator).
 
 [![npm version](https://img.shields.io/npm/v/chatbot-coroutine.svg)](https://www.npmjs.com/package/chatbot-coroutine)
 [![build status](https://img.shields.io/travis/derhuerst/chatbot-coroutine.svg)](https://travis-ci.org/derhuerst/chatbot-coroutine)
@@ -35,10 +35,10 @@ myChatbot.on('message', (user, msg) => {
 })
 ```
 
-**Now this example is still very naive**, as it doesn't handle invalid input and keeps data only in memory. But it demonstrates how such a structure can get quickly get very complex. Using `chatbot-coroutine`, you can **model your converstional bot like you would reason about it: As one coherent flow of incoming and outgoing messages**:
+Now **this example is still very naive**, as it doesn't handle invalid input and keeps data only in memory. But it demonstrates how such a structure can get quickly get very complex. Using `chatbot-coroutine`, you can **model your converstional bot like you would reason about it: As one coherent flow of incoming and outgoing messages**:
 
 ```js
-const createResponder = require('chatbot-coroutine')
+const createRespond = require('chatbot-coroutine')
 const inMemStorage = require('chatbot-coroutine/in-mem-storage')
 
 const conversation = function* (ctx) {
@@ -49,8 +49,8 @@ const conversation = function* (ctx) {
 	yield ctx.clear()
 }
 
-const respond = createResponder(inMemStorage, myChatbot, conversation)
-myChatbot.on('message', respond)
+const respond = createRespond(inMemStorage, bot, conversation)
+bot.on('message', respond)
 ```
 
 To make the code handle crashes, write it like this:
@@ -87,24 +87,24 @@ npm install chatbot-coroutine
 Write a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) that represents the conversation the bot will have. See [Rationale](#rationale) for an example.
 
 ```js
-const conversation = function* (ctx, store) {
+const conversation = function* (ctx) {
 	// instructions
 }
 ```
 
-Using `createResponder`, create a `respond` function from it. Pass in a storage adapter that fits your needs.
+Using `createRespond`, create a `respond` function from it. Pass in a storage adapter that fits your needs.
 
 ```js
-const createResponder = require('chatbot-coroutine')
+const createRespond = require('chatbot-coroutine')
 const inMemStorage = require('chatbot-coroutine/in-mem-storage')
 
-const respond = createResponder(inMemStorage, myChatbot, conversation)
-myChatbot.on('message', respond)
+const respond = createRespond(inMemStorage, bot, conversation)
+bot.on('message', respond)
 ```
 
 ## API
 
-### `createResponder(storage, bot, conversation)`
+### `createRespond(storage, bot, conversation)`
 
 `bot` should have a `send(user, msg)` method.
 

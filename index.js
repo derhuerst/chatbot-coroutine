@@ -2,10 +2,10 @@
 
 const isPromise = require('is-promise')
 
-// todo: explanation about this
+// The `conversation` generator function is supposed to `yield` Promises. It may yield regular Promises – which just resolve with a value. To request a chat message from the coroutine, it may resolve with a special markup: an object with the `INSERT` flag set to true.
 const VALUE = Symbol.for('value')
 const INSERT = Symbol.for('insert')
-const INIT = Symbol.for('init')
+const RESTART = Symbol.for('restart')
 
 const createHandle = (value, insert) => {
 	const obj = Object.create(null)
@@ -19,11 +19,12 @@ const createHandle = (value, insert) => {
 }
 
 const isObj = (obj) => obj && ('object' === typeof obj)
+const mustYieldPromise = 'The `conversation` generator function must always yield Promises.'
 
 // see also https://github.com/Artazor/so/blob/abdc3f7/lib/so.js#L22-L43
 const coroutine = (gen, val, queue, cb) => {
 	const tick = (task) => {
-		if (!isPromise(task)) return cb(new Error('must yield a Promise'))
+		if (!isPromise(task)) return cb(new Error(mustYieldPromise))
 		return task.then(tock)
 	}
 
@@ -34,11 +35,13 @@ const coroutine = (gen, val, queue, cb) => {
 			insert = !!handle[INSERT]
 		}
 
-		// wait for a new message
-		if (insert && queue.length === 0) return cb(null, createHandle(null, insert))
+		if (insert && queue.length === 0) {
+			// wait for a new message
+			return cb(null, createHandle(null, insert))
+		}
 
 		const {done, value: task} = gen.next(insert ? queue.shift() : value)
-		if (done) return cb(null, INIT)
+		if (done) return cb(null, RESTART)
 		tick(task)
 	}
 
@@ -46,8 +49,7 @@ const coroutine = (gen, val, queue, cb) => {
 	.catch(cb)
 }
 
-// todo: find a better name than createResponder
-const createResponder = (storage, telegram, talk) => {
+const createRespond = (storage, telegram, conversation) => {
 	const createCtx = (user) => {
 		const insert = () => {
 			return Promise.resolve(createHandle(undefined, true))
@@ -79,8 +81,8 @@ const createResponder = (storage, telegram, talk) => {
 			let gen = gens[user]
 			let queue = queues[user]
 
-			if (val === INIT) {
-				gen = gens[user] = talk(createCtx(user))
+			if (val === RESTART) {
+				gen = gens[user] = conversation(createCtx(user))
 				queue = queues[user] = []
 				val = null
 			}
@@ -97,10 +99,10 @@ const createResponder = (storage, telegram, talk) => {
 		if (!queue) queue = queues[user] = []
 
 		queue.push(msg)
-		if (!tasks[user]) loop(INIT)
+		if (!tasks[user]) loop(RESTART)
 		else tasks[user].then(loop)
 	}
 }
 
-Object.assign(createResponder, {INIT, createHandle, coroutine})
-module.exports = createResponder
+Object.assign(createRespond, {RESTART, createHandle, coroutine})
+module.exports = createRespond

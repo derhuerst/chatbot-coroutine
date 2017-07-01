@@ -1,6 +1,6 @@
 'use strict'
 
-const createResponder = require('chatbot-coroutine')
+const createRespond = require('chatbot-coroutine')
 const inMemStorage = require('chatbot-coroutine/in-mem-storage')
 
 const conversation = function* (ctx) {
@@ -11,5 +11,5 @@ const conversation = function* (ctx) {
 	yield ctx.clear()
 }
 
-const respond = createResponder(inMemStorage(), myChatbot, conversation)
-myChatbot.on('message', respond)
+const respond = createRespond(inMemStorage(), bot, conversation)
+bot.on('message', respond)

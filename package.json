@@ -1,6 +1,6 @@
 {
 	"name": "chatbot-coroutine",
-	"description": "Abstract chatbot message into conversations.",
+	"description": "Model chatbots as conversations.",
 	"version": "0.1.0",
 	"main": "index.js",
 	"files": [

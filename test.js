@@ -3,8 +3,8 @@
 const test = require('tape')
 const timesSeries = require('async/timesSeries')
 
-const createResponder = require('.')
-const {createHandle, INIT, coroutine} = createResponder
+const createRespond = require('.')
+const {createHandle, RESTART, coroutine} = createRespond
 const inMemStorage = require('./in-mem-storage')
 
 test('throws with non-Promise yield', (t) => {
@@ -97,7 +97,7 @@ test('handles the end properly', (t) => {
 
 	coroutine(run(), null, [], (err, val) => {
 		if (err) return t.ifError(err)
-		t.equal(val, INIT)
+		t.equal(val, RESTART)
 		coroutine(run(), null, [], (err) => {
 			if (err) t.ifError(err)
 			else t.end()
@@ -135,7 +135,7 @@ test('end-to-end test, running once', (t) => {
 		i++
 	}
 
-	const respond = createResponder(inMemStorage, {send: sendMock}, conversation)
+	const respond = createRespond(inMemStorage, {send: sendMock}, conversation)
 
 	// 1 dummy message to initiate the bot
 	sendMultiple(respond, ['hey', 'in1', 'in2'], (err) => {
@@ -163,7 +163,7 @@ test('end-to-end test, running twice', (t) => {
 		i++
 	}
 
-	const respond = createResponder(inMemStorage, {send: sendMock}, conversation)
+	const respond = createRespond(inMemStorage, {send: sendMock}, conversation)
 
 	// 2 dummy messages to initiate the bot
 	sendMultiple(respond, ['hey', 'in1', 'in2', 'hey', 'in1'], (err) => {
