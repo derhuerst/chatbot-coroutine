@@ -4,8 +4,10 @@ const levelDBStorage = (db) => (user) => {
 	const read = (key) => {
 		return new Promise((resolve, reject) => {
 			db.get(user + ':' + key, (err, val) => {
-				if (err) reject(err)
-				else resolve(val)
+				if (err) {
+					if (err.notFound) resolve(null)
+					else reject(err)
+				} else resolve(val)
 			})
 		})
 	}
