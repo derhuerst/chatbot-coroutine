@@ -35,7 +35,7 @@ myChatbot.on('message', (user, msg) => {
 })
 ```
 
-Now **this example is still very naive**, as it doesn't handle invalid input and keeps data only in memory. But it demonstrates how such a structure can get quickly get very complex. Using `chatbot-coroutine`, you can **model your converstional bot like you would reason about it: As one coherent flow of incoming and outgoing messages**:
+Now **this example is still very naive**, as it doesn't handle invalid input and keeps data only in memory. But it demonstrates how such a structure can get quickly get very complex. Using `chatbot-coroutine`, you can **model your converstional bot like you would reason about it: As one coherent flow of incoming and outgoing messages**.
 
 ```js
 const createRespond = require('chatbot-coroutine')
@@ -87,7 +87,7 @@ npm install chatbot-coroutine
 Write a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) that represents the conversation the bot will have. See [Rationale](#rationale) for an example.
 
 ```js
-const conversation = function* (ctx) {
+const conversation = function* (ctx, user) {
 	// instructions
 }
 ```
@@ -115,7 +115,10 @@ const levelDBStorage = require('chatbot-coroutine/leveldb-storage')(db)
 
 `bot` should have a `send(user, msg)` method.
 
-`conversation` should be a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) function, taking only one argument `ctx`.
+`conversation` should be a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) function, taking two arguments:
+
+- `ctx`: the context, allowing you to interact with the bot and the storage
+- `user`: the current user ID
 
 ### `ctx.msg()`
 

@@ -114,9 +114,11 @@ const sendMultiple = (respond, msgs, cb) => {
 }
 
 test('end-to-end test, running once', (t) => {
-	t.plan(4)
+	t.plan(1 + 2 + 2)
 
-	function* run (ctx) {
+	function* run (ctx, user) {
+		t.equal(user, 'some-user', 'invalid user passed to generator fn')
+
 		const in1 = yield ctx.prompt('out1')
 		t.equal(in1, 'in1', '1st received msg is "in1"')
 

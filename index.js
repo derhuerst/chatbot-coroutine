@@ -86,7 +86,7 @@ const createRespond = (storage, telegram, conversation, onError) => {
 			let queue = queues[user]
 
 			if (val === RESTART) {
-				gen = gens[user] = conversation(createCtx(user))
+				gen = gens[user] = conversation(createCtx(user), user)
 				queue = queues[user] = []
 				val = null
 			}
