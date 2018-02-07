@@ -52,19 +52,19 @@ const coroutine = (gen, val, queue, cb) => {
 	tick(Promise.resolve(val))
 }
 
-const createRespond = (storage, telegram, conversation, onError) => {
+const createRespond = (storage, bot, conversation, onError) => {
 	const createCtx = (user) => {
 		const insert = () => {
 			return Promise.resolve(createHandle(undefined, true))
 		}
 
-		const send = (msg) => {
-			telegram.send(user, msg)
+		const send = (...args) => {
+			bot.send(user, ...args)
 			return Promise.resolve()
 		}
 
-		const prompt = (msg) => {
-			telegram.send(user, msg)
+		const prompt = (...args) => {
+			bot.send(user, ...args)
 			return Promise.resolve(createHandle(undefined, true))
 		}
 
