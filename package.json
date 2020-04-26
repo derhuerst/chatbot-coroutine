@@ -24,7 +24,7 @@
 		"node": ">=6"
 	},
 	"dependencies": {
-		"is-promise": "^2.1.0"
+		"is-promise": "^3.0.0"
 	},
 	"devDependencies": {
 		"async": "^3.0.1",
